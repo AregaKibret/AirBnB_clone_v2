@@ -1,42 +1,41 @@
 #!/usr/bin/python3
-# Fabfile to create and distribute an archive to a web server.
+"""
+fcreates and distributes an archive to your web servers, using deploy():
+"""
+
 import os.path
 from datetime import datetime
-from fabric.api import env
-from fabric.api import local
-from fabric.api import put
-from fabric.api import run
+from fabric.api import env, local, put, run
 
-env.hosts = ["104.196.168.90", "35.196.46.172"]
+
+env.hosts = ["54.237.218.228", "34.203.75.52"]
 
 
 def do_pack():
-    """Create a tar gzipped archive of the directory web_static."""
-    dt = datetime.utcnow()
-    file = "versions/web_static_{}{}{}{}{}{}.tgz".format(dt.year,
-                                                         dt.month,
-                                                         dt.day,
-                                                         dt.hour,
-                                                         dt.minute,
-                                                         dt.second)
+    """Archives the static files."""
+    cur_time = datetime.now()
+    output = "versions/web_static_{}{}{}{}{}{}.tgz".format(
+        cur_time.year,
+        cur_time.month,
+        cur_time.day,
+        cur_time.hour,
+        cur_time.minute,
+        cur_time.second
+    )
     if os.path.isdir("versions") is False:
         if local("mkdir -p versions").failed is True:
             return None
-    if local("tar -cvzf {} web_static".format(file)).failed is True:
+    if local("tar -cvzf {} web_static".format(output)).failed is True:
         return None
-    return file
+    return output
 
 
 def do_deploy(archive_path):
-    """Distributes an archive to a web server.
-
+    """Deploys the static files to the host servers.
     Args:
-        archive_path (str): The path of the archive to distribute.
-    Returns:
-        If the file doesn't exist at archive_path or an error occurs - False.
-        Otherwise - True.
+        archive_path (str): The path to the archived static files.
     """
-    if os.path.isfile(archive_path) is False:
+    if not os.path.exists(archive_path):
         return False
     file = archive_path.split("/")[-1]
     name = file.split(".")[0]
@@ -69,8 +68,10 @@ def do_deploy(archive_path):
 
 
 def deploy():
-    """Create and distribute an archive to a web server."""
-    file = do_pack()
-    if file is None:
+    """
+    Archives and deploys the static files to the host servers.
+    """
+    output = do_pack()
+    if output is None:
         return False
-    return do_deploy(file)
+    return do_deploy(output)
